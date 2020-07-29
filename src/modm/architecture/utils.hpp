@@ -122,6 +122,8 @@
 	#define modm_fallthrough		__attribute__((fallthrough))
 	#define modm_noreturn			__attribute__((noreturn))
 	#define modm_warn_unused_result	__attribute__((warn_unused_result))
+	#define modm_naked				__attribute__((naked))
+	#define modm_fiber				modm_naked
 
 	#ifdef MODM_COMPILER_MINGW
 	 	// FIXME: Windows Object Format PE does not support weak symbols
