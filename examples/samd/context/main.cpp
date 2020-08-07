@@ -14,31 +14,38 @@
 #include <modm/board.hpp>
 
 #define	MODM_LOG_LEVEL modm::log::INFO
+#undef MODM_BOARD_HAS_LOGGER
 
 using namespace Board;
 using namespace std::chrono_literals;
 
 
-modm_fastdata uint32_t stack1[32], stack2[32]; // 256 bytes stack
+modm_fastdata uint32_t stack1[64], stack2[64]; // 64 bytes stack
 modm_fastdata modm_context f1_ctx, f2_ctx, m_ctx;
 
+modm_naked
 void f1() {
-  MODM_LOG_DEBUG << "f1: entered" << modm::endl;
+#ifdef MODM_BOARD_HAS_LOGGER
+  MODM_LOG_INFO << "f1: entered" << modm::endl;
+#endif
   while (1) {
     A0::set();
     modm_jumpcontext(&f1_ctx, f2_ctx);
   }
 }
 
+modm_naked
 void f2() {
-  MODM_LOG_DEBUG << "f2: entered" << modm::endl;
+#ifdef MODM_BOARD_HAS_LOGGER
+  MODM_LOG_INFO << "f2: entered" << modm::endl;
+#endif
   while (1) {
     A0::reset();
     modm_jumpcontext(&f2_ctx, f1_ctx);
   }
 }
 
-// Frequency of A0 is 642kHz, resulting in ~37 CPU cycles per context switch (incl. overhead).
+// Frequency of A0 is 766.5kHz, resulting in ~36 CPU cycles per context switch (incl. overhead).
 int main() {
   Board::initialize();
   A0::setOutput();

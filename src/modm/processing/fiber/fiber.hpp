@@ -28,7 +28,7 @@ class Scheduler;
 template<int size>
 class Stack {
   static_assert(size % 4 == 0, "Stack size must be multiple of 4.");
-  static_assert(size >= 20, "Stack size must at least 20 bytes.");
+  static_assert(size >= 40, "Stack size must at least 40 bytes.");
   friend class ::modm::Fiber;
   friend class Scheduler;
 public:
@@ -61,6 +61,7 @@ private:
   Fiber(const Fiber&) = delete;
   modm_context ctx_;
   uint32_t* stack_;
+  Fiber* next_;
 };
 
 namespace fiber {
@@ -77,13 +78,13 @@ protected:
   modm_always_inline
   void registerFiber(Fiber*);
   modm_always_inline
-  Fiber* currentFiber() { return *current_fiber_; }
+  Fiber* currentFiber() { return current_fiber_; }
  private:
   Scheduler(const Scheduler&) = delete;
   // FIXME: Find a way to determine the size (maybe through some lbuild magic?)
   std::array<Fiber*, 16> fibers_ = {};
   std::size_t fibers_size_ = 0;
-  std::array<Fiber*, 16>::iterator current_fiber_ = fibers_.begin();
+  Fiber* current_fiber_ = nullptr;
 };
 
 static Scheduler scheduler_instance_;

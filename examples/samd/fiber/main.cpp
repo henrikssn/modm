@@ -17,10 +17,22 @@ using namespace Board;
 using namespace std::chrono_literals;
 
 #ifdef MODM_BOARD_HAS_LOGGER
-#define STACK_SIZE 256
+#define STACK_SIZE 512
 #else
-#define STACK_SIZE 32
+// Without logging, we only need 4 byte (storing PC when performing a jump), plus space for
+// another 8 registers (32 bytes), which are pushed to the stack by hardware when an interrupt
+// happens (i.e. SysTick).
+#define STACK_SIZE 40
 #endif
+
+modm_fiber
+void f1();
+
+modm_fiber
+void f2();
+
+modm::fiber::Stack<STACK_SIZE> stack1, stack2;
+modm::Fiber fiber1(stack1, &f1), fiber2(stack2, &f2);
 
 modm_fiber
 void f1() {
@@ -44,17 +56,12 @@ void f2() {
   }
 }
 
-modm::fiber::Stack<STACK_SIZE> stack1, stack2;
-modm::Fiber fiber1(stack1, &f1), fiber2(stack2, &f2);
 
-// Frequency of A0 is 417.3kHz, resulting in ~57 CPU cycles per context switch (incl. GPIO overhead).
+// Frequency of A0 is 625.3kHz, resulting in ~45 CPU cycles per context switch (incl. GPIO overhead).
 int main( int argc, char * argv[])
 {
   Board::initialize();
   A0::setOutput();
-#ifdef MODM_BOARD_HAS_LOGGER
-  MODM_LOG_INFO << "Starting scheduler..." << modm::endl;
-#endif
   modm::fiber::scheduler().start();
   // Will never get here.
   return 0;
