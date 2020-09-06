@@ -19,14 +19,16 @@ namespace modm {
  */
 void yield() {
   using fiber::scheduler;
-  Fiber& current = *scheduler().current_fiber_;
-  scheduler().current_fiber_ = current.next_;
-  current.jump(*current.next_);
+  Fiber* current = scheduler().current_fiber_;
+  if (current->next_ != current) {
+    scheduler().current_fiber_ = current->next_;
+    current->jump(*current->next_);
+  }
 }
 
 template<int size>
 Fiber::Fiber(fiber::Stack<size>& stack, void(*f)()) : stack_(stack.memory_) {
-  ctx_ = modm_makecontext(stack.memory_, sizeof(stack.memory_), f);
+  ctx_ = modm_makecontext(stack.memory_, sizeof(stack.memory_), f, done);
   fiber::scheduler().registerFiber(this);
 }
 
@@ -36,36 +38,53 @@ void Fiber::dumpStack()  {
     << "Fiber: " << modm::hex << this
     << " Stack pointer: " << ctx_.sp
     << " Stack size: " << modm::ascii << ctx_.stack_size << modm::endl;
-  uint32_t* stack = stack_;
+  size_t* stack = (size_t*) stack_;
   for (size_t i = 0; i < ctx_.stack_size/4; ++i)
-    MODM_LOG_INFO << stack << " (" << i << "): " << modm::hex << *stack++ << modm::endl;
+    MODM_LOG_INFO << stack+i << " (" << i << "): " << modm::hex << *(stack + i) << modm::endl;
 #endif
+}
+
+void Fiber::done() {
+  using fiber::scheduler;
+  Fiber* current = scheduler().current_fiber_;
+  if (current->next_ == current) {
+    scheduler().current_fiber_ = nullptr;
+    modm_endcontext();
+  }
+  Fiber* prev_fiber = current;
+  for (;prev_fiber->next_ != scheduler().current_fiber_;
+       prev_fiber = prev_fiber->next_);
+  prev_fiber->next_ = prev_fiber->next_->next_;
+  yield();
 }
 
 namespace fiber {
 
 void Scheduler::registerFiber(Fiber* fiber) {
-  if (!fibers_size_) {
+  if (current_fiber_ == nullptr) {
     fiber->next_ = fiber;
-  } else {
-    fibers_.at(fibers_size_ - 1)->next_ = fiber;
-    fiber->next_ = fibers_.at(0);
+    current_fiber_ = fiber;
+    return;
   }
-  fibers_.at(fibers_size_++) = fiber;
+  Fiber* prev_fiber = current_fiber_;
+  for (;prev_fiber->next_ != scheduler().current_fiber_;
+       prev_fiber = prev_fiber->next_);
+  fiber->next_ = prev_fiber->next_;
+  prev_fiber->next_ = fiber;
 }
 
 void Scheduler::start() {
-  current_fiber_ = fibers_[0];
   Fiber& fiber = *current_fiber_;
 #ifdef MODM_BOARD_HAS_LOGGER
   MODM_LOG_DEBUG << "Starting scheduler with fibers " << modm::endl;
-  for (int i = 0; i < 2; ++i) {
+  for (Fiber* fiber = current_fiber_;; fiber = fiber->next_) {
     MODM_LOG_DEBUG
-      << i << ": (" << modm::hex << fibers_[i]
-      << ") { sp: " << fibers_[i]->ctx_.sp
-      << ", addr: " << *fibers_[i]->ctx_.sp
-      << ", next: " << fibers_[i]->next_ << " }"
+      << "(" << modm::hex << fiber
+      << ") { sp: " << fiber->ctx_.sp
+      << ", addr: " << *fiber->ctx_.sp
+      << ", next: " << fiber->next_ << " }"
       << modm::endl;
+    if (fiber->next_ == current_fiber_) break;
   }
   MODM_LOG_DEBUG
     << "scheduler: Jumping to fiber with sp-addr: " << modm::hex << fiber.ctx_.sp

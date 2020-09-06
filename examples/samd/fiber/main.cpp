@@ -25,16 +25,15 @@ using namespace std::chrono_literals;
 #define STACK_SIZE 40
 #endif
 
-modm_fiber
+
 void f1();
 
-modm_fiber
+
 void f2();
 
 modm::fiber::Stack<STACK_SIZE> stack1, stack2;
 modm::Fiber fiber1(stack1, &f1), fiber2(stack2, &f2);
 
-modm_fiber
 void f1() {
 #ifdef MODM_BOARD_HAS_LOGGER
   MODM_LOG_INFO << "f1: entered" << modm::endl;
@@ -45,7 +44,6 @@ void f1() {
   }
 }
 
-modm_fiber
 void f2() {
 #ifdef MODM_BOARD_HAS_LOGGER
   MODM_LOG_INFO << "f2: entered" << modm::endl;
