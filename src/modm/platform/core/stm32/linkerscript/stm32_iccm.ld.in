@@ -25,6 +25,8 @@ SECTIONS
 
 {{ linker.section_stack("RAM") }}
 
+{{ linker.section("RAM", "faststack", noload=True) }}
+
 {{ linker.section_ram("RAM", "FLASH") }}
 
 {{ linker.section_heap("RAM", "heap1") }}

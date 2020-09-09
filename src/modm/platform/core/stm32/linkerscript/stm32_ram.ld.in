@@ -22,6 +22,8 @@ SECTIONS
 
 {{ linker.section_vector_ram("RAM") }}
 
+{{ linker.section("RAM", "faststack", noload=True) }}
+
 {{ linker.section_rom("FLASH") }}
 
 {{ linker.section("FLASH", "fastcode") }}

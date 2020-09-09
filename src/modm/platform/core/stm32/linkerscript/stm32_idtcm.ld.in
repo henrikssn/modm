@@ -23,6 +23,8 @@ SECTIONS
 
 {{ linker.section("DTCM AT >FLASH", "fastdata") }}
 
+{{ linker.section("DTCM", "faststack", noload=True) }}
+
 {{ linker.section_heap("DTCM", "heap0") }}
 
 %% if "backup" in regions

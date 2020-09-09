@@ -16,6 +16,8 @@ SECTIONS
 
 {{ linker.section("CCM AT >FLASH", "fastdata") }}
 
+{{ linker.section("CCM", "faststack", noload=True) }}
+
 {{ linker.section_heap("CCM", "heap0") }}
 
 %% if "backup" in regions

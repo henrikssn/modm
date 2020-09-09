@@ -139,10 +139,12 @@
 	#	define modm_fastcode
 	#	define modm_ramcode
 	#	define modm_fastdata
+	#	define modm_faststack
 	#else
 	#	define modm_fastcode		modm_section(".fastcode")
 	#	define modm_ramcode			modm_section(".ramcode")
 	#	define modm_fastdata		modm_section(".fastdata")
+	#	define modm_faststack		modm_section(".faststack")
 	#endif
 
 	#ifdef __cplusplus
