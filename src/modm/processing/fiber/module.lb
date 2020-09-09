@@ -24,13 +24,18 @@ def prepare(module, options):
     return True
 
 def build(env):
+    core = env[":target"].get_driver("core")["type"]
+    env.substitutions = {"core": core}
+
     env.outbasepath = "modm/src/modm/processing/fiber"
+    env.copy("../fiber.hpp")
     env.copy("fiber.hpp")
     env.copy("fiber_impl.hpp")
     env.copy("context.hpp")
     env.copy("context.cpp")
-    if env[":target"].identifier["platform"] in ["sam", "stm32"]:
-        env.copy("context_cortex_impl.hpp", "context_impl.hpp")
-    elif env[":target"].identifier["platform"] in ["hosted"]:
+
+    if core.startswith("cortex-m"):
+        env.template("context_cortex_impl.hpp.in", "context_impl.hpp")
+
+    elif core == "hosted":
         env.copy("context_x86_64_impl.hpp", "context_impl.hpp")
-    env.copy("../fiber.hpp")

@@ -22,12 +22,12 @@ modm_makecontext(modm_stack_t* stack, std::size_t stack_size,
 
 modm_always_inline
 void
-modm_startcontext(const modm_context to) {
+modm_startcontext(const modm_context &to) {
   modm_jumpcontext(&main_context, to);
 }
 
 void
-modm_jumpcontext(modm_context* from, const modm_context to) {
+modm_jumpcontext(modm_context* from, const modm_context &to) {
   register modm_stack_t** from_sp asm("rcx") = &from->sp;
   register modm_stack_t* to_sp asm("rdx") = to.sp;
   asm volatile(

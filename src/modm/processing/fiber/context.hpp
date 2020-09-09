@@ -31,12 +31,12 @@ modm_makecontext(modm_stack_t* stack, std::size_t stack_size, void (*fn)(void), 
 /* Switches control from the main context to the user context. */
 modm_always_inline
 void
-modm_startcontext(const modm_context to);
+modm_startcontext(const modm_context &to);
 
 /* Jumps from the "from" user context to the "to" user context. */
 modm_always_inline
 void
-modm_jumpcontext(modm_context* from, const modm_context to);
+modm_jumpcontext(modm_context* from, const modm_context &to);
 
 /* Switches control back to the main context from the user context. */
 modm_always_inline
