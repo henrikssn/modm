@@ -11,17 +11,8 @@
 
 #pragma once
 
-#include <unittest/testsuite.hpp>
+namespace modm {
 
-/// @ingroup modm_test_test_architecture
-class FiberTest : public unittest::TestSuite
-{
-public:
-  void subroutine();
-  void testOneFiber();
-  void testTwoFibers();
-  void testYieldFromSubroutine();
-  void testBlockingRecieve();
-  void testNonBlockingRecieve();
-  void testSemaphore();
-};
+} // namespace modm
+
+#include "channel_impl.hpp"

@@ -13,14 +13,14 @@
 #include <modm/debug/logger.hpp>
 
 // Stack layout:
-// r8
-// r9
-// r10
-// r11
 // r4
 // r5
 // r6
 // r7
+// r8
+// r9
+// r10
+// r11
 // LR
 // PC
 
@@ -47,16 +47,7 @@ modm_startcontext(const modm_context &to)
 		"add r3, r3, #1"		"\n\t" // Stay in thumb mode
 		"push {r3}"				"\n\t" // Save instruction address to stack (to be used for PC later)
 
-%% if "m0" in core
-		"push {r4-r7, lr}"		"\n\t"
-		"mov r4, r8"			"\n\t"
-		"mov r5, r9"			"\n\t"
-		"mov r6, r10"			"\n\t"
-		"mov r7, r11"			"\n\t"
-		"push {r4-r7}"			"\n\t"
-%% else
 		"push {r4-r11, lr}"		"\n\t"
-%% endif
 
 		"mov r3, sp"			"\n\t"
 		"str r3, [%[main_sp]]"	"\n\t" // Store the main SP in "main_sp"
@@ -66,16 +57,7 @@ modm_startcontext(const modm_context &to)
 		"orr r3, r2"			"\n\t"
 		"msr control, r3"		"\n\t"
 
-%% if "m0" in core
-		"pop {r4-r7}"			"\n\t"
-		"mov r8, r4"			"\n\t"
-		"mov r9, r5"			"\n\t"
-		"mov r10, r6"			"\n\t"
-		"mov r11, r7"			"\n\t"
-		"pop {r4-r7}"			"\n\t"
-%% else
 		"pop {r4-r11}"			"\n\t"
-%% endif
 		"pop {r3}"				"\n\t"
 		"mov lr, r3"			"\n\t"
 
@@ -100,32 +82,13 @@ modm_jumpcontext(modm_context* from, const modm_context &to)
 		"add r3, r3, #1"		"\n\t" // Stay in thumb mode
 		"push {r3}"				"\n\t" // Save instruction address to stack (to be used for PC later)
 
-%% if "m0" in core
-		"push {r4-r7, lr}"		"\n\t"
-		"mov r4, r8"			"\n\t"
-		"mov r5, r9"			"\n\t"
-		"mov r6, r10"			"\n\t"
-		"mov r7, r11"			"\n\t"
-		"push {r4-r7}"			"\n\t"
-%% else
 		"push {r4-r11, lr}"		"\n\t"
-%% endif
-
 
 		"mov r3, sp"			"\n\t"
 		"str r3, [%[from_sp]]"	"\n\t" // Store the SP in "from"
 		"mov sp, %[to_sp]"		"\n\t" // Restore SP from "to"
 
-%% if "m0" in core
-		"pop {r4-r7}"			"\n\t"
-		"mov r8, r4"			"\n\t"
-		"mov r9, r5"			"\n\t"
-		"mov r10, r6"			"\n\t"
-		"mov r11, r7"			"\n\t"
-		"pop {r4-r7}"			"\n\t"
-%% else
 		"pop {r4-r11}"			"\n\t"
-%% endif
 		"pop {r3}"				"\n\t"
 		"mov lr, r3"			"\n\t"
 
@@ -149,16 +112,7 @@ modm_endcontext()
 		"bic r1, r1, r2"		"\n\t"
 		"msr control, r1"		"\n\t"
 
-%% if "m0" in core
-		"pop {r4-r7}"			"\n\t"
-		"mov r8, r4"			"\n\t"
-		"mov r9, r5"			"\n\t"
-		"mov r10, r6"			"\n\t"
-		"mov r11, r7"			"\n\t"
-		"pop {r4-r7}"			"\n\t"
-%% else
 		"pop {r4-r11}"			"\n\t"
-%% endif
 		"pop {r3}"				"\n\t"
 		"mov lr, r3"			"\n\t"
 

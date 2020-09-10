@@ -11,6 +11,7 @@
 
 #include "fiber_test.hpp"
 
+#define MODM_BOARD_HAS_LOGGER
 #include <modm/processing/fiber.hpp>
 
 #include <modm/debug/logger.hpp>
@@ -30,32 +31,40 @@ enum State {
   F3_END,
   SUBROUTINE_START,
   SUBROUTINE_END,
+  CONSUMER_START,
+  CONSUMER_END,
+  PRODUCER_START,
+  PRODUCER_END,
 };
 
 std::array<State, 6> states = {};
 size_t states_pos = 0;
 
+#define ADD_STATE(state) \
+  states[states_pos++] = state;
+
+
 void f1() {
-  states[states_pos++] = F1_START;
+  ADD_STATE(F1_START);
   modm::yield();
-  states[states_pos++] = F1_END;
+  ADD_STATE(F1_END);
 }
 
 void f2() {
-  states[states_pos++] = F2_START;
+  ADD_STATE(F2_START);
   modm::yield();
-  states[states_pos++] = F2_END;
+  ADD_STATE(F2_END);
 }
 
-modm::fiber::Stack<1024> stack1, stack2;
+modm::fiber::Stack<4096> stack1, stack2;
 
 }
 
 __attribute__((noinline))
 void subroutine() {
-  states[states_pos++] = SUBROUTINE_START;
+  ADD_STATE(SUBROUTINE_START);
   modm::yield();
-  states[states_pos++] = SUBROUTINE_END;
+  ADD_STATE(SUBROUTINE_END);
 }
 
 void FiberTest::testOneFiber() {
@@ -81,9 +90,9 @@ void FiberTest::testTwoFibers() {
 namespace {
 
 void f3() {
-  states[states_pos++] = F3_START;
+  ADD_STATE(F3_START);
   subroutine();
-  states[states_pos++] = F3_END;
+  ADD_STATE(F3_END);
 }
 
 } // namespace
@@ -99,4 +108,74 @@ void FiberTest::testYieldFromSubroutine() {
   TEST_ASSERT_EQUALS(states[3], F1_END);
   TEST_ASSERT_EQUALS(states[4], SUBROUTINE_END);
   TEST_ASSERT_EQUALS(states[5], F3_END);
+}
+
+namespace {
+
+modm::Channel<int> channel;
+
+void consumer() {
+  ADD_STATE(CONSUMER_START);
+  TEST_ASSERT_EQUALS(channel.recv(), 123);
+  ADD_STATE(CONSUMER_END);
+}
+
+void producer() {
+  ADD_STATE(PRODUCER_START);
+  channel.send(123);
+  ADD_STATE(PRODUCER_END);
+}
+
+} // namespace
+
+void FiberTest::testBlockingRecieve() {
+  states_pos = 0;
+  modm::Fiber fiber1(stack1, &consumer), fiber2(stack2, &producer);
+  modm::fiber::scheduler().start();
+  TEST_ASSERT_EQUALS(states_pos, 4u);
+  TEST_ASSERT_EQUALS(states[0], CONSUMER_START);
+  TEST_ASSERT_EQUALS(states[1], PRODUCER_START);
+  TEST_ASSERT_EQUALS(states[2], CONSUMER_END);
+  TEST_ASSERT_EQUALS(states[3], PRODUCER_END);
+}
+
+void FiberTest::testNonBlockingRecieve() {
+  states_pos = 0;
+  modm::Fiber fiber1(stack1, &producer), fiber2(stack2, &consumer);
+  modm::fiber::scheduler().start();
+  TEST_ASSERT_EQUALS(states_pos, 4u);
+  TEST_ASSERT_EQUALS(states[0], PRODUCER_START);
+  TEST_ASSERT_EQUALS(states[1], PRODUCER_END);
+  TEST_ASSERT_EQUALS(states[2], CONSUMER_START);
+  TEST_ASSERT_EQUALS(states[3], CONSUMER_END);
+}
+
+namespace {
+
+modm::Semaphore<1> semaphore;
+
+void semaphoreConsumer() {
+  ADD_STATE(CONSUMER_START);
+  semaphore.acquire();
+  ADD_STATE(CONSUMER_END);
+}
+
+void semaphoreProducer() {
+  ADD_STATE(PRODUCER_START);
+  semaphore.release();
+  ADD_STATE(PRODUCER_END);
+}
+
+} // namespace
+
+
+void FiberTest::testSemaphore() {
+  states_pos = 0;
+  modm::Fiber fiber1(stack1, &semaphoreProducer), fiber2(stack2, &semaphoreConsumer);
+  modm::fiber::scheduler().start();
+  TEST_ASSERT_EQUALS(states_pos, 4u);
+  TEST_ASSERT_EQUALS(states[0], PRODUCER_START);
+  TEST_ASSERT_EQUALS(states[1], PRODUCER_END);
+  TEST_ASSERT_EQUALS(states[2], CONSUMER_START);
+  TEST_ASSERT_EQUALS(states[3], CONSUMER_END);
 }

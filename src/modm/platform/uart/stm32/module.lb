@@ -29,7 +29,7 @@ class Instance(Module):
             BooleanOption(
                 name="buffered",
                 description="",
-                default=True))
+                default=False))
         module.add_option(
             NumericOption(
                 name="buffer.tx",
