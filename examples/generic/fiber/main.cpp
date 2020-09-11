@@ -17,17 +17,16 @@ using namespace Board;
 using namespace std::chrono_literals;
 
 constexpr uint32_t cycles = 1000'000;
-volatile uint32_t counter = 0;
+volatile uint32_t f1counter = 0, f2counter = 0;
 
 void f1() {
-  while (++counter < cycles) {
+  while (++f1counter < cycles / 2) {
     modm::yield();
   }
 }
 
 void f2() {
-  while (++counter < cycles) {
-    asm volatile ("");
+  while (++f2counter < cycles / 2) {
     modm::yield();
   }
 }
@@ -36,8 +35,8 @@ modm::fiber::Stack<2048> stack1, stack2;
 modm::Fiber fiber1(stack1, &f1), fiber2(stack2, &f2);
 
 
-// Blue pill (M3 64MHz): Executed 1000000 in 1520841us (657530.94 yields per second)
-// Feather M0 (M0+ 48MHz): Executed 1000000 in 2190108us (456598.50 yields per second)
+// Blue pill (M3 72MHz): Executed 1000000 in 1098591us (910256.88 yields per second)
+// Feather M0 (M0+ 48MHz): Executed 1000000 in 1944692us (514220.25 yields per second)
 int main( int argc, char * argv[])
 {
   Board::initialize();

@@ -82,8 +82,7 @@ class Fiber
 
 protected:
 	inline void
-	jump(Fiber& other)
-	{ modm_jumpcontext(&ctx_, other.ctx_); }
+	jump(Fiber& other);
 
 private:
   Fiber() = default;
@@ -314,7 +313,7 @@ protected:
   Fiber* current_fiber_ = nullptr;
 };
 
-static Scheduler scheduler;
+extern Scheduler scheduler;
 
 } // namespace fiber
 

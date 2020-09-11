@@ -9,6 +9,7 @@
  */
 // ----------------------------------------------------------------------------
 
+#include "context.hpp"
 
 modm_context
 modm_makecontext(modm_stack_t* stack, std::size_t stack_size,
@@ -20,7 +21,6 @@ modm_makecontext(modm_stack_t* stack, std::size_t stack_size,
   return {sp, stack_size};
 }
 
-modm_always_inline
 void
 modm_startcontext(const modm_context &to) {
   modm_jumpcontext(&main_context, to);
@@ -60,7 +60,6 @@ modm_jumpcontext(modm_context* from, const modm_context &to) {
     /*clobbers*/: "rax", "memory");
 }
 
-modm_always_inline
 void
 modm_endcontext() {
   modm_context dummy;

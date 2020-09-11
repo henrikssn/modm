@@ -16,6 +16,7 @@
 
 #include <modm/debug/logger.hpp>
 
+#include <array>
 #include <string>
 #include <vector>
 
@@ -68,18 +69,20 @@ void subroutine() {
 }
 
 void FiberTest::testOneFiber() {
+  MODM_LOG_INFO << "testOneFiber" << modm::endl;
   states_pos = 0;
   modm::Fiber fiber(stack1, &f1);
-  modm::fiber::scheduler().start();
+  modm::fiber::scheduler.start();
   TEST_ASSERT_EQUALS(states_pos, 2u);
   TEST_ASSERT_EQUALS(states[0], F1_START);
   TEST_ASSERT_EQUALS(states[1], F1_END);
 }
 
 void FiberTest::testTwoFibers() {
+  MODM_LOG_INFO << "testTwoFibers" << modm::endl;
   states_pos = 0;
   modm::Fiber fiber1(stack1, &f1), fiber2(stack2, &f2);
-  modm::fiber::scheduler().start();
+  modm::fiber::scheduler.start();
   TEST_ASSERT_EQUALS(states_pos, 4u);
   TEST_ASSERT_EQUALS(states[0], F1_START);
   TEST_ASSERT_EQUALS(states[1], F2_START);
@@ -98,9 +101,10 @@ void f3() {
 } // namespace
 
 void FiberTest::testYieldFromSubroutine() {
+  MODM_LOG_INFO << "testYieldFromSubroutine" << modm::endl;
   states_pos = 0;
   modm::Fiber fiber1(stack1, &f1), fiber2(stack2, &f3);
-  modm::fiber::scheduler().start();
+  modm::fiber::scheduler.start();
   TEST_ASSERT_EQUALS(states_pos, 6u);
   TEST_ASSERT_EQUALS(states[0], F1_START);
   TEST_ASSERT_EQUALS(states[1], F3_START);
@@ -129,9 +133,10 @@ void producer() {
 } // namespace
 
 void FiberTest::testBlockingRecieve() {
+  MODM_LOG_INFO << "testBlockingRecieve" << modm::endl;
   states_pos = 0;
   modm::Fiber fiber1(stack1, &consumer), fiber2(stack2, &producer);
-  modm::fiber::scheduler().start();
+  modm::fiber::scheduler.start();
   TEST_ASSERT_EQUALS(states_pos, 4u);
   TEST_ASSERT_EQUALS(states[0], CONSUMER_START);
   TEST_ASSERT_EQUALS(states[1], PRODUCER_START);
@@ -140,9 +145,10 @@ void FiberTest::testBlockingRecieve() {
 }
 
 void FiberTest::testNonBlockingRecieve() {
+  MODM_LOG_INFO << "testNonBlockingRecieve" << modm::endl;
   states_pos = 0;
   modm::Fiber fiber1(stack1, &producer), fiber2(stack2, &consumer);
-  modm::fiber::scheduler().start();
+  modm::fiber::scheduler.start();
   TEST_ASSERT_EQUALS(states_pos, 4u);
   TEST_ASSERT_EQUALS(states[0], PRODUCER_START);
   TEST_ASSERT_EQUALS(states[1], PRODUCER_END);
@@ -154,25 +160,26 @@ namespace {
 
 modm::Semaphore<1> semaphore;
 
-void semaphoreConsumer() {
-  ADD_STATE(CONSUMER_START);
-  semaphore.acquire();
-  ADD_STATE(CONSUMER_END);
-}
-
 void semaphoreProducer() {
   ADD_STATE(PRODUCER_START);
-  semaphore.release();
+  semaphore.acquire();
   ADD_STATE(PRODUCER_END);
+}
+
+void semaphoreConsumer() {
+  ADD_STATE(CONSUMER_START);
+  semaphore.release();
+  ADD_STATE(CONSUMER_END);
 }
 
 } // namespace
 
 
 void FiberTest::testSemaphore() {
+  MODM_LOG_INFO << "testSemaphore" << modm::endl;
   states_pos = 0;
   modm::Fiber fiber1(stack1, &semaphoreProducer), fiber2(stack2, &semaphoreConsumer);
-  modm::fiber::scheduler().start();
+  modm::fiber::scheduler.start();
   TEST_ASSERT_EQUALS(states_pos, 4u);
   TEST_ASSERT_EQUALS(states[0], PRODUCER_START);
   TEST_ASSERT_EQUALS(states[1], PRODUCER_END);

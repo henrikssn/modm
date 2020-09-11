@@ -9,6 +9,7 @@
  */
 // ----------------------------------------------------------------------------
 
+#include "context.hpp"
 #include <modm/platform/device.hpp>
 #include <modm/debug/logger.hpp>
 
@@ -39,14 +40,9 @@ modm_makecontext(modm_stack_t* stack, std::size_t stack_size,
 void
 modm_startcontext(const modm_context &to)
 {
-	modm_stack_t** main_sp = &main_context.sp;
-	modm_stack_t* to_sp = to.sp;
 	asm volatile
 	(
-		"adr r3, 1f"			"\n\t" // Load address of instruction after "pop {pc}" into r3
-		"add r3, r3, #1"		"\n\t" // Stay in thumb mode
-		"push {r3}"				"\n\t" // Save instruction address to stack (to be used for PC later)
-
+		"push {lr}"		"\n\t"
 		"push {r4-r11, lr}"		"\n\t"
 
 		"mov r3, sp"			"\n\t"
@@ -57,48 +53,34 @@ modm_startcontext(const modm_context &to)
 		"orr r3, r2"			"\n\t"
 		"msr control, r3"		"\n\t"
 
-		"pop {r4-r11}"			"\n\t"
-		"pop {r3}"				"\n\t"
-		"mov lr, r3"			"\n\t"
-
+		"pop {r4-r11, lr}"			"\n\t" // LR points to the "done" function
 		"pop {pc}"				"\n\t" // Perform the jump
-		".align 2"				"\n\t"
-		"1:"					"\n\t"
 
-		/*outputs*/: [main_sp] "+r" (main_sp), [to_sp] "+r" (to_sp)
-		/*inputs*/:
-		/*clobbers*/: "r2", "r3", "memory"
+    /*outputs*/:
+    /*inputs*/: [main_sp] "r" (&main_context.sp), [to_sp] "r" (to.sp)
+    /*clobbers*/: "r2", "r3", "memory"
 	);
 }
 
 void
 modm_jumpcontext(modm_context* from, const modm_context &to)
 {
-	register modm_stack_t** from_sp asm("r0") = &from->sp;
-	register modm_stack_t* to_sp asm("r1") = to.sp;
 	asm volatile
 	(
-		"adr r3, 1f"			"\n\t" // Load address of instruction after "pop {pc}" into r3
-		"add r3, r3, #1"		"\n\t" // Stay in thumb mode
-		"push {r3}"				"\n\t" // Save instruction address to stack (to be used for PC later)
 
+		"push {lr}"		"\n\t" // Later used as PC
 		"push {r4-r11, lr}"		"\n\t"
 
 		"mov r3, sp"			"\n\t"
 		"str r3, [%[from_sp]]"	"\n\t" // Store the SP in "from"
 		"mov sp, %[to_sp]"		"\n\t" // Restore SP from "to"
 
-		"pop {r4-r11}"			"\n\t"
-		"pop {r3}"				"\n\t"
-		"mov lr, r3"			"\n\t"
+		"pop {r4-r11, lr}"			"\n\t"
+		"pop {pc}"			"\n\t" // Perform the jump
 
-		"pop {pc}"				"\n\t" // Perform the jump
-		".align 2"				"\n\t"
-		"1:"					"\n\t"
-
-		/*outputs*/: [from_sp] "+r" (from_sp), [to_sp] "+r" (to_sp)
-		/*inputs*/:
-		/*clobbers*/: "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "memory"
+    /*outputs*/:
+    /*inputs*/: [from_sp] "r" (&from->sp), [to_sp] "r" (to.sp)
+    /*clobbers*/: "r3", "memory"
 	);
 }
 
@@ -112,11 +94,8 @@ modm_endcontext()
 		"bic r1, r1, r2"		"\n\t"
 		"msr control, r1"		"\n\t"
 
-		"pop {r4-r11}"			"\n\t"
-		"pop {r3}"				"\n\t"
-		"mov lr, r3"			"\n\t"
-
-		"pop {pc}"				"\n\t" // Perform the jump
+		"pop {r4-r11, lr}"			"\n\t"
+		"pop {pc}"			"\n\t" // Perform the jump
 
 		/*outputs*/:
 		/*inputs*/:

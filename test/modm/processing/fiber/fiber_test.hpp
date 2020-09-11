@@ -21,7 +21,7 @@ public:
   void testOneFiber();
   void testTwoFibers();
   void testYieldFromSubroutine();
-  void testBlockingRecieve();
   void testNonBlockingRecieve();
+  void testBlockingRecieve();
   void testSemaphore();
 };

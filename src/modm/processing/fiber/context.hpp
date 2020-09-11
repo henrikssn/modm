@@ -25,22 +25,17 @@ struct modm_context {
 extern modm_context main_context;
 
 /* Prepares the stack to look like the "from" arg after modm_jumpcontext as run. */
-inline modm_context
+modm_context
 modm_makecontext(modm_stack_t* stack, std::size_t stack_size, void (*fn)(void), void (*end)(void));
 
 /* Switches control from the main context to the user context. */
-modm_always_inline
 void
 modm_startcontext(const modm_context &to);
 
 /* Jumps from the "from" user context to the "to" user context. */
-modm_always_inline
 void
 modm_jumpcontext(modm_context* from, const modm_context &to);
 
 /* Switches control back to the main context from the user context. */
-modm_always_inline
 void
 modm_endcontext();
-
-#include "context_impl.hpp"

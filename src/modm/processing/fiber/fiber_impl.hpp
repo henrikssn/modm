@@ -26,15 +26,9 @@ void yield()
 {
   using fiber::scheduler;
   Fiber* current = scheduler.currentFiber();
-  Fiber* next;
-  if (scheduler.last_fiber_->next() != current) {
-    next = scheduler.lastFiber()->next();
-  } else {
-    next = current->next();
-    scheduler.last_fiber_ = current;
-  }
-  if (current == next) return;
-  scheduler.current_fiber_ = next;
+  Fiber* next = current->next();
+  if (next == current) return;
+  scheduler.last_fiber_ = current;
   current->jump(*next);
 }
 
@@ -46,16 +40,23 @@ Fiber::Fiber(fiber::Stack<size>& stack, void(*f)())
 	fiber::scheduler.registerFiber(this);
 }
 
+void
+Fiber::jump(Fiber& other)
+{
+  fiber::scheduler.current_fiber_ = &other;
+  modm_jumpcontext(&ctx_, other.ctx_);
+}
+
 void Fiber::done() {
   using fiber::scheduler;
+  Fiber* current = scheduler.currentFiber();
+  Fiber* next = current->next();
   scheduler.removeCurrent();
   if (scheduler.empty()) {
-// #ifdef MODM_BOARD_HAS_LOGGER
-//   MODM_LOG_DEBUG << "Fiber::done: Returning control to main thread." << modm::endl;
-// #endif
+    scheduler.current_fiber_ = nullptr;
     modm_endcontext();
   }
-  yield();
+  current->jump(*next);
 }
 
 template<class Data_t>
@@ -80,7 +81,7 @@ Data_t Channel<Data_t>::recv() {
     wait();
   }
   // Now we are in full or ready state.
-  modm_assert(!empty(), "Channel::poll.empty", "Channel should not be empty");
+  modm_assert(!empty(), "Channel::recv.empty", "Channel should not be empty");
   Data_t result;
   if (--size_) {
     result = std::move(buffer_[size_]);
@@ -97,7 +98,6 @@ void Scheduler::registerFiber(Fiber* fiber) {
   if (last_fiber_ == nullptr) {
     fiber->next(fiber);
     last_fiber_ = fiber;
-    current_fiber_ = fiber;
     return;
   }
   runLast(fiber);
@@ -105,19 +105,20 @@ void Scheduler::registerFiber(Fiber* fiber) {
 
 void Scheduler::start() {
   if (last_fiber_ == nullptr) return;
-// #ifdef MODM_BOARD_HAS_LOGGER
-//   MODM_LOG_DEBUG << "Starting scheduler with fibers [ current = " << currentFiber()
-//   << ", last = " << lastFiber()
-//   << " ] " << modm::endl;
-//   for (Fiber* fiber = currentFiber();; fiber = fiber->next()) {
-//     MODM_LOG_DEBUG
-//       << "(" << modm::hex << fiber
-//       << ") { sp: " << fiber->ctx_.sp
-//       << ", next: " << fiber->next() << " }"
-//       << modm::endl;
-//     if (fiber->next() == currentFiber()) break;
-//   }
-// #endif
+  current_fiber_ = last_fiber_->next();
+#ifdef MODM_BOARD_HAS_LOGGER
+  MODM_LOG_DEBUG << "Starting scheduler with fibers [ current = " << currentFiber()
+  << ", last = " << lastFiber()
+  << " ] " << modm::endl;
+  for (Fiber* fiber = currentFiber();; fiber = fiber->next()) {
+    MODM_LOG_DEBUG
+      << "(" << modm::hex << fiber
+      << ") { sp: " << fiber->ctx_.sp
+      << ", next: " << fiber->next() << " }"
+      << modm::endl;
+    if (fiber->next() == currentFiber()) break;
+  }
+#endif
   modm_startcontext(currentFiber()->ctx_);
 }
 

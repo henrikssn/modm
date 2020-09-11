@@ -19,6 +19,12 @@
 
 namespace modm {
 
+namespace fiber {
+
+Scheduler scheduler;
+
+} // namespace fiber
+
 void Fiber::dumpStack()  {
 #ifdef MODM_BOARD_HAS_LOGGER
   MODM_LOG_DEBUG
@@ -34,7 +40,7 @@ void Fiber::dumpStack()  {
 void Waitable::wait() {
   using ::modm::fiber::scheduler;
   pushWaiter(scheduler.removeCurrent());
-  yield();
+  scheduler.currentFiber()->jump(*scheduler.lastFiber()->next());
 }
 
 void Waitable::signal() {

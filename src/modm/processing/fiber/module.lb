@@ -35,10 +35,8 @@ def build(env):
     env.copy("context.cpp")
 
     if core.startswith("cortex-m0"):
-        env.copy("context_cortex_m0_impl.hpp", "context_impl.hpp")
-
+        env.copy("context_cortex_m0.cpp")
     elif core.startswith("cortex-m"):
-        env.copy("context_cortex_armv7_impl.hpp", "context_impl.hpp")
-
+        env.copy("context_cortex_armv7.cpp")
     elif core == "hosted":
-        env.copy("context_x86_64_impl.hpp", "context_impl.hpp")
+        env.copy("context_x86_64.cpp")
