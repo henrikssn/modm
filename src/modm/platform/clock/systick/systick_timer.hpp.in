@@ -52,7 +52,7 @@ public:
 	{
 		static_assert(SystemClock::Frequency < (2ull << 24)*8*{{systick_frequency}},
 		              "HLCK is too fast for the SysTick to run at {{systick_frequency}}Hz!");
-		if constexpr (SystemClock::Frequency < 8'000'000) {
+		if constexpr (SystemClock::Frequency < 8'000'000 || {{ "true" if "sam" in platform else "false" }}) {
 			constexpr auto result = Prescaler::from_range(
 					SystemClock::Frequency, {{ systick_frequency }}, 1, (1ul << 24)-1);
 			PeripheralDriver::assertBaudrateInTolerance< result.frequency, {{ systick_frequency }}, tolerance >();
