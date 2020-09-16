@@ -17,10 +17,9 @@ def init(module):
 def prepare(module, options):
     if options[":target"].identifier["platform"] not in ["hosted", "sam", "stm32"]:
         return False
-    deps = [":architecture"]
-    if options[":target"].identifier["platform"] in ["hosted", "sam", "stm32"]:
-        deps.append(":cmsis:device")
-    module.depends(deps)
+    module.depends(":architecture:assert")
+    if options[":target"].identifier["platform"] in ["sam", "stm32"]:
+        module.depends(":cmsis:device")
     return True
 
 def build(env):
