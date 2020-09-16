@@ -57,7 +57,7 @@ void f2() {
   ADD_STATE(F2_END);
 }
 
-modm::fiber::Stack<4096> stack1, stack2;
+modm::fiber::Stack<1024> stack1, stack2;
 
 }
 
