@@ -9,22 +9,20 @@
  */
 // ----------------------------------------------------------------------------
 
+#include <modm/board.hpp>
 #include <modm/debug/logger.hpp>
 #include <modm/processing.hpp>
-#include <modm/board.hpp>
 
-#define	MODM_LOG_LEVEL modm::log::INFO
+#define MODM_LOG_LEVEL modm::log::INFO
 #undef MODM_BOARD_HAS_LOGGER
 
 using namespace Board;
 using namespace std::chrono_literals;
 
-
-modm_fastdata uint32_t stack1[64], stack2[64]; // 64 bytes stack
+modm_fastdata uint32_t stack1[64], stack2[64];  // 64 bytes stack
 modm_fastdata modm_context f1_ctx, f2_ctx, m_ctx;
 
-modm_naked
-void f1() {
+modm_naked void f1() {
 #ifdef MODM_BOARD_HAS_LOGGER
   MODM_LOG_INFO << "f1: entered" << modm::endl;
 #endif
@@ -34,8 +32,7 @@ void f1() {
   }
 }
 
-modm_naked
-void f2() {
+modm_naked void f2() {
 #ifdef MODM_BOARD_HAS_LOGGER
   MODM_LOG_INFO << "f2: entered" << modm::endl;
 #endif
@@ -45,17 +42,16 @@ void f2() {
   }
 }
 
-// Frequency of A0 is 766.5kHz, resulting in ~36 CPU cycles per context switch (incl. overhead).
+// Frequency of A0 is 766.5kHz, resulting in ~36 CPU cycles per context switch
+// (incl. overhead).
 int main() {
   Board::initialize();
   A0::setOutput();
   f1_ctx = modm_makecontext(stack1, sizeof(stack1), &f1);
   f2_ctx = modm_makecontext(stack2, sizeof(stack2), &f2);
-  MODM_LOG_DEBUG
-    << "main: Jumping to f1 with sp-addr: "
-    << modm::hex << f1_ctx.sp
-    << " and f-addr: " << modm::hex << *(uint32_t*)(f1_ctx.sp + 0x10)
-    << modm::endl;
+  MODM_LOG_DEBUG << "main: Jumping to f1 with sp-addr: " << modm::hex
+                 << f1_ctx.sp << " and f-addr: " << modm::hex
+                 << *(uint32_t*)(f1_ctx.sp + 0x10) << modm::endl;
   modm_jumpcontext(&m_ctx, f1_ctx);
   // Will never get here.
   return 0;

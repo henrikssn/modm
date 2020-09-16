@@ -23,17 +23,18 @@ namespace fiber {
 
 Scheduler scheduler;
 
-} // namespace fiber
+}  // namespace fiber
 
-void Fiber::dumpStack()  {
+void Fiber::dumpStack() {
 #ifdef MODM_BOARD_HAS_LOGGER
-  MODM_LOG_DEBUG
-    << "Fiber: " << modm::hex << this
-    << " Stack pointer: " << ctx_.sp
-    << " Stack size: " << modm::ascii << ctx_.stack_size << modm::endl;
-  size_t* stack = (size_t*) stack_;
+  MODM_LOG_DEBUG << "Fiber: " << modm::hex << this
+                 << " Stack pointer: " << ctx_.sp
+                 << " Stack size: " << modm::ascii << ctx_.stack_size
+                 << modm::endl;
+  size_t* stack = (size_t*)stack_;
   for (size_t i = 0; i < ctx_.stack_size / sizeof(modm_stack_t); ++i)
-    MODM_LOG_INFO << stack+i << " (" << i << "): " << modm::hex << *(stack + i) << modm::endl;
+    MODM_LOG_INFO << stack + i << " (" << i << "): " << modm::hex
+                  << *(stack + i) << modm::endl;
 #endif
 }
 
@@ -76,4 +77,4 @@ void Waitable::pushWaiter(Fiber* waiter) {
   last_waiter_ = waiter;
 }
 
-} // namespace modm
+}  // namespace modm

@@ -12,11 +12,9 @@
 #include "fiber_test.hpp"
 
 #define MODM_BOARD_HAS_LOGGER
-#include <modm/processing/fiber.hpp>
-
-#include <modm/debug/logger.hpp>
-
 #include <array>
+#include <modm/debug/logger.hpp>
+#include <modm/processing/fiber.hpp>
 #include <string>
 #include <vector>
 
@@ -41,9 +39,7 @@ enum State {
 std::array<State, 6> states = {};
 size_t states_pos = 0;
 
-#define ADD_STATE(state) \
-  states[states_pos++] = state;
-
+#define ADD_STATE(state) states[states_pos++] = state;
 
 void f1() {
   ADD_STATE(F1_START);
@@ -59,10 +55,9 @@ void f2() {
 
 modm::fiber::Stack<1024> stack1, stack2;
 
-}
+}  // namespace
 
-__attribute__((noinline))
-void subroutine() {
+__attribute__((noinline)) void subroutine() {
   ADD_STATE(SUBROUTINE_START);
   modm::yield();
   ADD_STATE(SUBROUTINE_END);
@@ -98,7 +93,7 @@ void f3() {
   ADD_STATE(F3_END);
 }
 
-} // namespace
+}  // namespace
 
 void FiberTest::testYieldFromSubroutine() {
   MODM_LOG_INFO << "testYieldFromSubroutine" << modm::endl;
@@ -130,7 +125,7 @@ void producer() {
   ADD_STATE(PRODUCER_END);
 }
 
-} // namespace
+}  // namespace
 
 void FiberTest::testBlockingRecieve() {
   MODM_LOG_INFO << "testBlockingRecieve" << modm::endl;
@@ -172,13 +167,13 @@ void semaphoreConsumer() {
   ADD_STATE(CONSUMER_END);
 }
 
-} // namespace
-
+}  // namespace
 
 void FiberTest::testSemaphore() {
   MODM_LOG_INFO << "testSemaphore" << modm::endl;
   states_pos = 0;
-  modm::Fiber fiber1(stack1, &semaphoreProducer), fiber2(stack2, &semaphoreConsumer);
+  modm::Fiber fiber1(stack1, &semaphoreProducer),
+      fiber2(stack2, &semaphoreConsumer);
   modm::fiber::scheduler.start();
   TEST_ASSERT_EQUALS(states_pos, 4u);
   TEST_ASSERT_EQUALS(states[0], PRODUCER_START);

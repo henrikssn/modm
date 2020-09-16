@@ -12,18 +12,16 @@
 #pragma once
 
 #include <modm/architecture/interface/assert.hpp>
-
 #include <utility>
 
-namespace modm
-{
+namespace modm {
 
 /*
- * Important: Since this function is using callee's stack, you should not use any stack. That means
- * all function calls need to be inlined and all variables register allocated.
+ * Important: Since this function is using callee's stack, you should not use
+ * any stack. That means all function calls need to be inlined and all variables
+ * register allocated.
  */
-void yield()
-{
+void yield() {
   using fiber::scheduler;
   Fiber* current = scheduler.currentFiber();
   Fiber* next = current->next();
@@ -32,17 +30,13 @@ void yield()
   current->jump(*next);
 }
 
-template<int size>
-Fiber::Fiber(fiber::Stack<size>& stack, void(*f)())
-	: stack_(stack.memory_)
-{
-	ctx_ = modm_makecontext(stack.memory_, sizeof(stack.memory_), f, done);
-	fiber::scheduler.registerFiber(this);
+template <int size>
+Fiber::Fiber(fiber::Stack<size>& stack, void (*f)()) : stack_(stack.memory_) {
+  ctx_ = modm_makecontext(stack.memory_, sizeof(stack.memory_), f, done);
+  fiber::scheduler.registerFiber(this);
 }
 
-void
-Fiber::jump(Fiber& other)
-{
+void Fiber::jump(Fiber& other) {
   fiber::scheduler.current_fiber_ = &other;
   modm_jumpcontext(&ctx_, other.ctx_);
 }
@@ -59,7 +53,7 @@ void Fiber::done() {
   current->jump(*next);
 }
 
-template<class Data_t>
+template <class Data_t>
 void Channel<Data_t>::send(const Data_t& data) {
   if (full()) {
     wait();
@@ -75,7 +69,7 @@ void Channel<Data_t>::send(const Data_t& data) {
   signal();
 }
 
-template<class Data_t>
+template <class Data_t>
 Data_t Channel<Data_t>::recv() {
   if (empty()) {
     wait();
@@ -107,21 +101,18 @@ void Scheduler::start() {
   if (last_fiber_ == nullptr) return;
   current_fiber_ = last_fiber_->next();
 #ifdef MODM_BOARD_HAS_LOGGER
-  MODM_LOG_DEBUG << "Starting scheduler with fibers [ current = " << currentFiber()
-  << ", last = " << lastFiber()
-  << " ] " << modm::endl;
+  MODM_LOG_DEBUG << "Starting scheduler with fibers [ current = "
+                 << currentFiber() << ", last = " << lastFiber() << " ] "
+                 << modm::endl;
   for (Fiber* fiber = currentFiber();; fiber = fiber->next()) {
-    MODM_LOG_DEBUG
-      << "(" << modm::hex << fiber
-      << ") { sp: " << fiber->ctx_.sp
-      << ", next: " << fiber->next() << " }"
-      << modm::endl;
+    MODM_LOG_DEBUG << "(" << modm::hex << fiber << ") { sp: " << fiber->ctx_.sp
+                   << ", next: " << fiber->next() << " }" << modm::endl;
     if (fiber->next() == currentFiber()) break;
   }
 #endif
   modm_startcontext(currentFiber()->ctx_);
 }
 
-}
+}  // namespace fiber
 
-} // namespace modm
+}  // namespace modm

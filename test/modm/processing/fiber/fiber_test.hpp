@@ -14,9 +14,8 @@
 #include <unittest/testsuite.hpp>
 
 /// @ingroup modm_test_test_architecture
-class FiberTest : public unittest::TestSuite
-{
-public:
+class FiberTest : public unittest::TestSuite {
+ public:
   void subroutine();
   void testOneFiber();
   void testTwoFibers();
