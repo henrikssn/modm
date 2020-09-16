@@ -16,44 +16,41 @@
 #include <modm/debug/logger.hpp>
 #endif
 
-namespace modm
-{
+namespace modm {
 
 class Fiber;
 inline void
 yield();
 
-namespace fiber
-{
+namespace fiber {
 
-class Scheduler;
+    class Scheduler;
 
-/**
+    /**
  * Stack captures a memory area used as fiber stack.
  *
  * @author	Erik Henriksson
  * @ingroup	modm_processing_fiber
  */
-template<int size>
-class Stack
-{
-	static_assert(size % 4 == 0, "Stack size must be multiple of 4.");
-	static_assert(size >= 40, "Stack size must at least 40 bytes.");
-	friend class ::modm::Fiber;
-	friend class Scheduler;
+    template <int size>
+    class Stack {
+        static_assert(size % 4 == 0, "Stack size must be multiple of 4.");
+        static_assert(size >= 40, "Stack size must at least 40 bytes.");
+        friend class ::modm::Fiber;
+        friend class Scheduler;
 
-public:
-	Stack() = default;
-	Stack(const Stack&) = delete;
+    public:
+        Stack() = default;
+        Stack(const Stack&) = delete;
 
-private:
-	modm_aligned(8)
-	modm_stack_t memory_[size / sizeof(modm_stack_t)];
-};
+    private:
+        modm_aligned(8)
+            modm_stack_t memory_[size / sizeof(modm_stack_t)];
+    };
 
 } // namespace fiber
 
-template<class Data_t>
+template <class Data_t>
 class Channel;
 class Waitable;
 
@@ -66,43 +63,44 @@ class Waitable;
  * @author	Erik Henriksson
  * @ingroup	modm_processing_fiber
  */
-class Fiber
-{
-  friend class fiber::Scheduler;
-  template<class> friend class Channel;
-  friend class Waitable;
-  friend void yield();
- public:
-  template<int size>
-  Fiber(fiber::Stack<size>& stack, void(*f)());
-	/**
+class Fiber {
+    friend class fiber::Scheduler;
+    template <class>
+    friend class Channel;
+    friend class Waitable;
+    friend void yield();
+
+public:
+    template <int size>
+    Fiber(fiber::Stack<size>& stack, void (*f)());
+    /**
    * Logs the fiber stack if logging is enabled, otherwise does nothing. Useful for debugging.
 	 */
-  void dumpStack();
+    void dumpStack();
 
 protected:
-	inline void
-	jump(Fiber& other);
+    inline void
+    jump(Fiber& other);
 
 private:
-  Fiber() = default;
-  Fiber(const Fiber&) = delete;
+    Fiber() = default;
+    Fiber(const Fiber&) = delete;
 
-	// Removes the current fiber from the scheduler and yields execution. This is called on fiber
-	// return.
-	static inline void
-	done();
+    // Removes the current fiber from the scheduler and yields execution. This is called on fiber
+    // return.
+    static inline void
+    done();
 
-  modm_always_inline
-  Fiber* next() { return next_; }
+    modm_always_inline
+        Fiber*
+        next() { return next_; }
 
-  modm_always_inline
-  void next(Fiber* fiber) { next_ = fiber; }
+    modm_always_inline void next(Fiber* fiber) { next_ = fiber; }
 
 private:
-  modm_context ctx_;
-  modm_stack_t stack_;
-  Fiber* next_;
+    modm_context ctx_;
+    modm_stack_t stack_;
+    Fiber* next_;
 };
 
 /**
@@ -113,26 +111,26 @@ private:
  * @author	Erik Henriksson
  * @ingroup	modm_processing_fiber
  */
-class Waitable
-{
+class Waitable {
 protected:
-	/**
+    /**
    * Adds current fiber to the waitlist and yields execution.
 	 */
-  void wait();
+    void wait();
 
-  /**
+    /**
    * Resumes next fiber in the waitlist (yields execution of current fiber).
    *
    * This will push the waiting fiber to the front of the ready queue, the reason for this is that
    * it allows a more efficient implementation of message passing (the reciever is guaranteed to
    * consume the sent message immediately).
 	 */
-  void signal();
+    void signal();
+
 private:
-  Fiber* last_waiter_;
-  Fiber* popWaiter();
-  void pushWaiter(Fiber* waiter);
+    Fiber* last_waiter_;
+    Fiber* popWaiter();
+    void pushWaiter(Fiber* waiter);
 };
 
 /**
@@ -147,16 +145,14 @@ private:
  * @author	Erik Henriksson
  * @ingroup	modm_processing_fiber
  */
-template<typename Data_t>
-class Channel : Waitable
-{
+template <typename Data_t>
+class Channel : Waitable {
 public:
+    bool empty() { return !size_; }
 
-  bool empty() { return !size_; }
+    bool full() { return size_ > buffer_size_; }
 
-  bool full() { return size_ > buffer_size_; }
-
-	/**
+    /**
    * Send data to the channel.
    *
    * This method will be non-blocking if the channel is in the ready state, otherwise it will yield
@@ -164,9 +160,9 @@ public:
 	 *
 	 *  @param data	Data to add to the channel
 	 */
-  void send(const Data_t& data);
+    void send(const Data_t& data);
 
-	/**
+    /**
    * Receive data from the channel.
    *
    * This method will be non-blocking if the channel is in the ready state, otherwise it will yield
@@ -174,13 +170,13 @@ public:
 	 *
 	 *  @return The data from the channel.
 	 */
-  Data_t recv();
+    Data_t recv();
 
 private:
-  Data_t data_;
-  Data_t* buffer_ = nullptr;
-  size_t buffer_size_ = 0;
-  size_t size_;
+    Data_t data_;
+    Data_t* buffer_ = nullptr;
+    size_t buffer_size_ = 0;
+    size_t size_;
 };
 
 /**
@@ -190,39 +186,41 @@ private:
  * @author	Erik Henriksson
  * @ingroup	modm_processing_fiber
  */
-template<std::ptrdiff_t MaxValue>
-class Semaphore : Waitable
-{
+template <std::ptrdiff_t MaxValue>
+class Semaphore : Waitable {
 public:
-  /**
+    /**
    * Increments the internal counter and unblocks acquirers.
    *
    * Yields execution if the counter is equal to MaxValue.
 	 */
-  void release() {
-    if (!counter_) {
-      wait();
+    void release()
+    {
+        if (!counter_) {
+            wait();
+        }
+        ++counter_;
+        signal();
     }
-    ++counter_;
-    signal();
-  }
 
-  /**
+    /**
    * Decrements the internal counter and unblocks releasers.
    *
    * Yields execution if the counter is zero.
 	 */
-  void acquire() {
-    if (counter_ == max()) {
-      wait();
+    void acquire()
+    {
+        if (counter_ == max()) {
+            wait();
+        }
+        ++counter_;
+        signal();
     }
-    ++counter_;
-    signal();
-  }
 
-  static std::ptrdiff_t max() { return MaxValue; }
+    static std::ptrdiff_t max() { return MaxValue; }
+
 private:
-  std::ptrdiff_t counter_ = 0;
+    std::ptrdiff_t counter_ = 0;
 };
 
 /**
@@ -239,81 +237,89 @@ using Mutex = Semaphore<1>;
  * @author	Erik Henriksson
  * @ingroup	modm_processing_fiber
  */
-class MutexLock
-{
+class MutexLock {
 public:
-  /**
+    /**
    * Aquires the Mutex.
 	 */
-  MutexLock(Mutex* m) : mutex_(m) { mutex_->acquire(); }
+    MutexLock(Mutex* m)
+        : mutex_(m)
+    {
+        mutex_->acquire();
+    }
 
-  /**
+    /**
    * Releases the Mutex.
 	 */
-  ~MutexLock() { mutex_->release(); }
+    ~MutexLock() { mutex_->release(); }
+
 private:
-  Mutex* mutex_;
+    Mutex* mutex_;
 };
 
 namespace fiber {
 
-class Scheduler
-{
-	friend class modm::Fiber;
-	friend void modm::yield();
-public:
-  constexpr Scheduler() = default;
-  /* Should be called by the main() function. */
-  inline void
-  start();
+    class Scheduler {
+        friend class modm::Fiber;
+        friend void modm::yield();
 
-  inline Fiber*
-  currentFiber() { return current_fiber_; }
+    public:
+        constexpr Scheduler() = default;
+        /* Should be called by the main() function. */
+        inline void
+        start();
 
-  inline Fiber*
-  lastFiber() { return last_fiber_; }
+        inline Fiber*
+        currentFiber() { return current_fiber_; }
 
-  inline bool
-  empty() { return last_fiber_ == nullptr; }
+        inline Fiber*
+        lastFiber() { return last_fiber_; }
 
-  inline Fiber*
-  removeCurrent() {
-    Fiber* current = currentFiber();
-    if (current == last_fiber_) {
-      last_fiber_ = nullptr;
-    } else {
-      last_fiber_->next(current->next());
-    }
-    current->next(nullptr);
-    return current;
-  }
+        inline bool
+        empty() { return last_fiber_ == nullptr; }
 
-  inline void
-  runNext(Fiber* fiber) {
-    Fiber* current = currentFiber();
-    fiber->next(current->next());
-    current->next(fiber);
-  }
+        inline Fiber*
+        removeCurrent()
+        {
+            Fiber* current = currentFiber();
+            if (current == last_fiber_) {
+                last_fiber_ = nullptr;
+            } else {
+                last_fiber_->next(current->next());
+            }
+            current->next(nullptr);
+            return current;
+        }
 
-  inline void
-  runLast(Fiber* fiber) {
-    fiber->next(last_fiber_->next());
-    last_fiber_->next(fiber);
-    last_fiber_ = fiber;
-  }
+        inline void
+        runNext(Fiber* fiber)
+        {
+            Fiber* current = currentFiber();
+            fiber->next(current->next());
+            current->next(fiber);
+        }
 
-protected:
-  inline void
-  registerFiber(Fiber*);
- private:
-  Scheduler(const Scheduler&) = delete;
-  // Last fiber in the ready queue.
-  Fiber* last_fiber_ = nullptr;
-  // Current running fiber
-  Fiber* current_fiber_ = nullptr;
-};
+        inline void
+        runLast(Fiber* fiber)
+        {
+            fiber->next(last_fiber_->next());
+            last_fiber_->next(fiber);
+            last_fiber_ = fiber;
+        }
 
-extern Scheduler scheduler;
+    protected:
+        inline void
+        registerFiber(Fiber*);
+
+    private:
+        Scheduler(const Scheduler&) = delete;
+        // Last fiber in the ready queue.
+        Fiber* last_fiber_ = nullptr;
+        // Current running fiber
+        Fiber* current_fiber_ = nullptr;
+    };
+
+    extern Scheduler scheduler;
 
 } // namespace fiber
 

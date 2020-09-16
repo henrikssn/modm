@@ -21,59 +21,64 @@ namespace modm {
 
 namespace fiber {
 
-Scheduler scheduler;
+    Scheduler scheduler;
 
 } // namespace fiber
 
-void Fiber::dumpStack()  {
+void Fiber::dumpStack()
+{
 #ifdef MODM_BOARD_HAS_LOGGER
-  MODM_LOG_DEBUG
-    << "Fiber: " << modm::hex << this
-    << " Stack pointer: " << ctx_.sp
-    << " Stack size: " << modm::ascii << ctx_.stack_size << modm::endl;
-  size_t* stack = (size_t*) stack_;
-  for (size_t i = 0; i < ctx_.stack_size / sizeof(modm_stack_t); ++i)
-    MODM_LOG_INFO << stack+i << " (" << i << "): " << modm::hex << *(stack + i) << modm::endl;
+    MODM_LOG_DEBUG
+        << "Fiber: " << modm::hex << this
+        << " Stack pointer: " << ctx_.sp
+        << " Stack size: " << modm::ascii << ctx_.stack_size << modm::endl;
+    size_t* stack = (size_t*)stack_;
+    for (size_t i = 0; i < ctx_.stack_size / sizeof(modm_stack_t); ++i)
+        MODM_LOG_INFO << stack + i << " (" << i << "): " << modm::hex << *(stack + i) << modm::endl;
 #endif
 }
 
-void Waitable::wait() {
-  using ::modm::fiber::scheduler;
-  pushWaiter(scheduler.removeCurrent());
-  scheduler.currentFiber()->jump(*scheduler.lastFiber()->next());
+void Waitable::wait()
+{
+    using ::modm::fiber::scheduler;
+    pushWaiter(scheduler.removeCurrent());
+    scheduler.currentFiber()->jump(*scheduler.lastFiber()->next());
 }
 
-void Waitable::signal() {
-  using ::modm::fiber::scheduler;
-  Fiber* waiter = popWaiter();
-  if (waiter != nullptr) {
-    scheduler.runNext(waiter);
-    yield();
-  }
+void Waitable::signal()
+{
+    using ::modm::fiber::scheduler;
+    Fiber* waiter = popWaiter();
+    if (waiter != nullptr) {
+        scheduler.runNext(waiter);
+        yield();
+    }
 }
 
-Fiber* Waitable::popWaiter() {
-  if (!last_waiter_) {
-    return nullptr;
-  }
-  Fiber* first = last_waiter_->next();
-  if (first == last_waiter_) {
-    last_waiter_ = nullptr;
-  } else {
-    last_waiter_->next(first->next());
-  }
-  first->next(nullptr);
-  return first;
+Fiber* Waitable::popWaiter()
+{
+    if (!last_waiter_) {
+        return nullptr;
+    }
+    Fiber* first = last_waiter_->next();
+    if (first == last_waiter_) {
+        last_waiter_ = nullptr;
+    } else {
+        last_waiter_->next(first->next());
+    }
+    first->next(nullptr);
+    return first;
 }
 
-void Waitable::pushWaiter(Fiber* waiter) {
-  if (last_waiter_) {
-    waiter->next(last_waiter_->next());
-    last_waiter_->next(waiter);
-  } else {
-    waiter->next(waiter);
-  }
-  last_waiter_ = waiter;
+void Waitable::pushWaiter(Fiber* waiter)
+{
+    if (last_waiter_) {
+        waiter->next(last_waiter_->next());
+        last_waiter_->next(waiter);
+    } else {
+        waiter->next(waiter);
+    }
+    last_waiter_ = waiter;
 }
 
 } // namespace modm
