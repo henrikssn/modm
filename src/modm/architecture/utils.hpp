@@ -127,36 +127,36 @@
 	#define modm_fallthrough		__attribute__((fallthrough))
 	#define modm_noreturn			__attribute__((noreturn))
 	#define modm_warn_unused_result	__attribute__((warn_unused_result))
-	#define modm_naked				__attribute__((naked))
-	#define modm_fiber				modm_naked
+#define modm_naked                  __attribute__((naked))
+#define modm_fiber                  modm_naked
 
-	#ifdef MODM_COMPILER_MINGW
-	 	// FIXME: Windows Object Format PE does not support weak symbols
-	 	//	- Bug reported for mingw32 : https://sourceware.org/bugzilla/show_bug.cgi?id=9687
-	 	// 	- Investigate Boost libs how they solve this issue
-	 	//	- __attribute__ ((weak, alias ("__aliasedFunction"))) seems to work on Windows
-	#	define modm_weak
-	#else
- 	#	define modm_weak			__attribute__((weak))
-	#endif
+#ifdef MODM_COMPILER_MINGW
+// FIXME: Windows Object Format PE does not support weak symbols
+//	- Bug reported for mingw32 : https://sourceware.org/bugzilla/show_bug.cgi?id=9687
+// 	- Investigate Boost libs how they solve this issue
+//	- __attribute__ ((weak, alias ("__aliasedFunction"))) seems to work on Windows
+#define modm_weak
+#else
+#define modm_weak __attribute__((weak))
+#endif
 
-	#if defined(MODM_OS_HOSTED) || defined(MODM_CPU_AVR)
-	#	define modm_fastcode
-	#	define modm_ramcode
-	#	define modm_fastdata
-	#	define modm_faststack
-	#else
-	#	define modm_fastcode		modm_section(".fastcode")
-	#	define modm_ramcode			modm_section(".ramcode")
-	#	define modm_fastdata		modm_section(".fastdata")
-	#	define modm_faststack		modm_section(".faststack")
-	#endif
+#if defined(MODM_OS_HOSTED) || defined(MODM_CPU_AVR)
+#define modm_fastcode
+#define modm_ramcode
+#define modm_fastdata
+#define modm_faststack
+#else
+#define modm_fastcode  modm_section(".fastcode")
+#define modm_ramcode   modm_section(".ramcode")
+#define modm_fastdata  modm_section(".fastdata")
+#define modm_faststack modm_section(".faststack")
+#endif
 
-	#ifdef __cplusplus
-	#	define modm_extern_c extern "C"
-	#else
-	#	define modm_extern_c
-	#endif
+#ifdef __cplusplus
+#define modm_extern_c extern "C"
+#else
+#define modm_extern_c
+#endif
 
 	#define MODM_IMPORT_BINARY(name, file, section) \
 		asm 										\
